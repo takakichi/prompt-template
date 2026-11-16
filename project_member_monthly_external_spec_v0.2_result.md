@@ -433,24 +433,35 @@ Accept: application/json
 
 ### 8.1 正常系
 
-```text
-利用者          Web画面                    Web API                  DB
-  │               │                         │                      │
-  │ 条件指定      │                         │                      │
-  │──────────────>│                         │                      │
-  │ 「表示」押下  │                         │                      │
-  │──────────────>│                         │                      │
-  │               │ 入力検証                │                      │
-  │               │ GET /api/v1/...         │                      │
-  │               │────────────────────────>│                      │
-  │               │                         │ 認証・認可／検証      │
-  │               │                         │ 検索・集計           │
-  │               │                         │─────────────────────>│
-  │               │                         │<─────────────────────│
-  │               │       HTTP 200 / JSON   │                      │
-  │               │<────────────────────────│                      │
-  │               │ 6か月の列と明細を描画   │                      │
-  │<──────────────│                         │                      │
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as 利用者
+    participant Web as Web画面
+    participant API as Web API
+    participant DB as データベース
+
+    User->>Web: 検索条件を指定
+    Note over User,Web: プロジェクト番号・年度・上期/下期・工数/コスト
+    User->>Web: 「表示」ボタン押下
+
+    Web->>Web: 入力チェック
+    Web->>API: GET /api/v1/project-member-monthly
+    Note over Web,API: 検索条件をクエリパラメータで送信
+
+    activate API
+    API->>API: 認証・認可・パラメータ検証
+    API->>DB: 対象実績の検索・集計
+    activate DB
+    DB-->>API: 従業員別・月別実績
+    deactivate DB
+
+    API->>API: 6か月合計・JSON生成
+    API-->>Web: HTTP 200 / JSON
+    deactivate API
+
+    Web->>Web: 6か月の列と明細を生成
+    Web-->>User: 月次実績一覧を表示
 ```
 
 ### 8.2 異常系（案）
